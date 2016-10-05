@@ -29,7 +29,9 @@
     "mocha": "^3.0.2"
   },
   "dependencies": {
-    "lodash": "^4.15.0"
+    "compare-names": "^1.0.0",
+    "doi-regex": "^0.1.4",
+    "lodash": "^4.16.3"
   },
   "engines": {
     "node": "4.0.0"
