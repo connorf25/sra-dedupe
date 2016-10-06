@@ -29,6 +29,7 @@
     "mocha": "^3.0.2"
   },
   "dependencies": {
+    "async-chainable": "^2.1.1",
     "compare-names": "^1.0.0",
     "doi-regex": "^0.1.4",
     "lodash": "^4.16.3",

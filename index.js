@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var async = require('async-chainable');
 var compareNames = require('compare-names');
 var doiRegex = require('doi-regex');
 var events = require('events');
@@ -142,6 +143,58 @@ function SRADedupe(settings) {
 		// Final - not a duplicate {{{
 		return {isDupe: false, reason: 'EXHAUSTED'};
 		// }}}
+	};
+
+	/**
+	* Asynchronously compare all entities within a collection firing emitters as duplicates are found
+	* NOTE: References are run via dedupe.fetchRef() before they are examined. Override that function if you wish to use a pseudo generator (such as DB access)
+	* @param {array} refs An array of references
+	* @fires dupe A duplicate was found, called with both sides of the comparison and the duplicate result
+	* @fires end The end-of-operation notifier
+	* @return {Object} This object instance
+	* @see fetchRef()
+	*/
+	dedupe.compareAll = function(refs) {
+		async()
+			.forEach(refs, function(nextRef1, ref1, ref1Offset) {
+				async()
+					.then('ref1Resolved', function(next) {
+						dedupe.fetchRef(ref1, next);
+					})
+					.forEach(refs.slice(ref1Offset+1), function(nextRef2, ref2, ref2Offset) {
+						var ref1Resolved = this.ref1Resolved;
+						dedupe.fetchRef(ref2, function(err, ref2Resolved) {
+							if (err) return nextRef2(err);
+							var result = dedupe.compare(ref1Resolved, ref2Resolved);
+							if (result.isDupe) {
+								dedupe.emit('dupe', ref1, ref2, result);
+							}
+							nextRef2();
+						});
+					})
+					.then(function(next) {
+						dedupe.emit('progress', ref1Offset, refs.length);
+						next();
+					})
+					.end(nextRef1);
+			})
+			.end(function(err) {
+				if (err) return dedupe.emit('error', err);
+				dedupe.emit('end');
+			});
+
+		return this;
+	};
+
+	/**
+	* Utility function used by compareAll to fetch individual references (for example from a database)
+	* This function by itself is a stub - override this if you want special functionality
+	* @param {*} ref The reference to resolve
+	* @param {function} callback The callback to invoke when finished
+	*/
+	dedupe.fetchRef = function(ref, callback) {
+		// Stub - just passthough assuming that ref is already a full reference
+		callback(null, ref);
 	};
 
 	return dedupe;
