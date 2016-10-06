@@ -2,6 +2,7 @@ var _ = require('lodash');
 var compareNames = require('compare-names');
 var doiRegex = require('doi-regex');
 var events = require('events');
+var natural = require('natural');
 var util = require('util');
 
 function SRADedupe(settings) {
@@ -11,9 +12,13 @@ function SRADedupe(settings) {
 		regexps: {
 			alphaNumeric: /[^a-z0-9]+/g,
 			junkWords: /\b(the|a)\b/g,
-			looksNumeric: /^[^0-9\.\-]+$/,
-			looksNumericWhitespace: /^\s*[^0-9\.\-]+\s*$/,
+			looksNumeric: /^[0-9\.\-]+$/,
+			looksNumericWhitespace: /^\s*[0-9\.\-]+\s*$/,
 			onlyNumeric: /[^0-9]+/g,
+		},
+		stringDistances: {
+			jaroWinklerMin: 0.9, // natural.JaroWinklerDistance
+			levenshteinMax: 10, // natural.LevenshteinDistance
 		},
 	});
 
@@ -36,6 +41,18 @@ function SRADedupe(settings) {
 	};
 
 	/**
+	* Returns the number version of the given value or false if it cannot be converted
+	* @param {string|number} val The incomming value
+	* @param {number|boolean} Either the converted value of false if it is not numeric
+	*/
+	dedupe.getNumeric = function(val) {
+		if (_.isNumber(val)) return val;
+		if (dedupe.settings.regexps.looksNumeric.test(val)) return parseInt(val.replace(dedupe.settings.regexps.onlyNumeric, ''));
+
+		return false;
+	};
+
+	/**
 	* Examine two inputs and decide if they are duplicate references
 	* @param {Object} ref1 The first reference to compare
 	* @param {Object} ref2 The second reference to compare
@@ -49,18 +66,21 @@ function SRADedupe(settings) {
 
 		// Stage 2 - Basic sanity checks - do not match if year, page, volume, isbn or number is present BUT mismatch exactly {{{
 		// Since these fields are usually numeric its fairly likely that if these dont match its not a duplicate
-		if (['year', 'pages', 'volume', 'number', 'isbn'].some(function(f) {
+		var reason;
+		if (['year', 'pages', 'volume', 'number', 'isbn'].some(function(f) { // NOTE: This returns an inverted value (i.e. return true = mismatches)
 			if (ref1[f] && ref2[f]) { // Both refs possess the comparitor
-				if (!dedupe.settings.regexps.looksNumeric.test(ref1[f]) || !dedupe.settings.regexps.looksNumeric.test(ref2[f])) return false;
-				// Strip all non-numerics out {{{
-				var cf1 = ref1[f].replace(dedupe.settings.regexps.onlyNumeric, '');
-				if (!cf1) return; // Skip out if nothing is left anyway
-				var cf2 = ref2[f].replace(dedupe.settings.regexps.onlyNumeric, '');
-				if (!cf2) return;
-				// }}}
-				return (cf1 != cf2);
+				var ref1n = dedupe.getNumeric(ref1[f]);
+				var ref2n = dedupe.getNumeric(ref2[f]);
+				if (ref1n === false || ref2n === false) return true; // One side isn't comparable
+
+				if (ref1n != ref2n) {
+					reason = f;
+					return true;
+				} else {
+					return false;
+				}
 			}
-		})) return {isDupe: false, reason: 'UNKNOWN'};
+		})) return {isDupe: false, reason: reason};
 		// }}}
 
 		// Stage 3 - Extract DOIs from both sides and compare {{{
@@ -83,15 +103,10 @@ function SRADedupe(settings) {
 		// This comparison only works if each side has a 'perfect' ISBN - i.e. /^\s*[0-9\.\-\s]+\s*$/
 		// This test uses the certainty that ISBN numbers are unlikely to be mangled
 		// If both (de-noised) ISBNs match the ref is declared a dupe, if not they are declared a NON dupe
-		if (
-			ref1.isbn &&
-			ref2.isbn &&
-			dedupe.settings.regexps.looksNumericWhitespace.test(ref1.isbn) &&
-			dedupe.settings.regexps.looksNumericWhitespace.test(ref2.isbn)
-		) {
-			var r1ISBN = ref1.replace(dedupe.settings.regexps.onlyNumeric, '');
-			var r2ISBN = ref2.replace(dedupe.settings.regexps.onlyNumeric, '');
-			return {isDupe: r1ISBN == r2ISBN, reason: 'isbn'}; // If direct match its a dupe, if not its NOT a dupe
+		var r1Isbn = dedupe.getNumeric(ref1.isbn);
+		var r2Isbn = dedupe.getNumeric(ref2.isbn);
+		if (r1Isbn !== false && r2Isbn !== false) { // Can compare ISBNs
+			return {isDupe: r1Isbn == r2Isbn, reason: 'isbn'}; // If direct match its a dupe, if not its NOT a dupe
 		}
 		// }}}
 
@@ -112,16 +127,16 @@ function SRADedupe(settings) {
 		}*/
 
 		if (
-			(ref1.authors && ref2.authors) &&
-			(
+			(ref1.title && ref2.title) && // Has all required fields?
+			( // Title matches or approximately matches
 				ref1.title == ref2.title ||
 				(
-					natural.JaroWinklerDistance(r1Title, r2Title) >= config.tasks.dedupe.stringDistance.jaroWinklerMin &&
-					natural.LevenshteinDistance(r1Title, r2Title) <= config.tasks.dedupe.stringDistance.levenshteinMax
+					natural.JaroWinklerDistance(r1Title, r2Title) >= dedupe.settings.stringDistances.jaroWinklerMin &&
+					natural.LevenshteinDistance(r1Title, r2Title) <= dedupe.settings.stringDistances.levenshteinMax
 				)
 			) &&
-			compareNames(ref1.authors, ref2.authors)
-		) return {isDupe: true, reason: 'authors'};
+			compareNames(ref1.authors || [], ref2.authors || []) // Authors look similar
+		) return {isDupe: true, reason: 'title+authors'};
 		// }}}
 
 		// Final - not a duplicate {{{
