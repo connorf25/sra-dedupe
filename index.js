@@ -150,6 +150,7 @@ function SRADedupe(settings) {
 	* NOTE: References are run via dedupe.fetchRef() before they are examined. Override that function if you wish to use a pseudo generator (such as DB access)
 	* @param {array} refs An array of references
 	* @fires dupe A duplicate was found, called with both sides of the comparison and the duplicate result
+	* @fires progress Indicates how far though the library the function has travelled. Function is called with current record number and maximum
 	* @fires end The end-of-operation notifier
 	* @return {Object} This object instance
 	* @see fetchRef()
