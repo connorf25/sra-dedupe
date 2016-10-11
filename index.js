@@ -13,6 +13,7 @@ function SRADedupe(settings) {
 	dedupe.settings = _.defaults(settings, {
 		regexps: {
 			alphaNumeric: /[^a-z0-9]+/g,
+			doi: doiRegex(),
 			junkWords: /\b(the|a)\b/g,
 			looksNumeric: /^[0-9\.\-]+$/,
 			looksNumericWhitespace: /^\s*[0-9\.\-]+\s*$/,
@@ -32,11 +33,11 @@ function SRADedupe(settings) {
 	* @return {string|boolean} Either the extracted 'true' DOI (i.e. minus URL prefix) or boolean false if none is present
 	*/
 	dedupe.findDOI = function(ref) {
-		if (ref.doi && doiRegex().test(ref.doi)) return ref.doi.match(doiRegex())[0];
+		if (ref.doi && dedupe.settings.regexps.doi.test(ref.doi)) return ref.doi.match(dedupe.settings.regexps.doi)[0];
 
 		if (ref.urls) {
-			var matching = ref.urls.filter(url => doiRegex().test(url));
-			if (matching.length == 1) return matching[0].match(doiRegex())[0];
+			var matching = ref.urls.filter(url => dedupe.settings.regexps.doi.test(url));
+			if (matching.length == 1) return matching[0].match(dedupe.settings.regexps.doi)[0];
 		}
 
 		return false;
