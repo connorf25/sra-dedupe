@@ -23,6 +23,10 @@ function SRADedupe(settings) {
 			jaroWinklerMin: 0.9, // natural.JaroWinklerDistance
 			levenshteinMax: 10, // natural.LevenshteinDistance
 		},
+		compareAll: {
+			threadLimit: 50, // How many parallel threads to allow when comparing
+			progressThrottle: 100, // Throttle progress reporting to this value
+		},
 	});
 
 
@@ -159,14 +163,16 @@ function SRADedupe(settings) {
 	* @see fetchRef()
 	*/
 	dedupe.compareAll = function(refs) {
+		var throttledProgress = _.throttle((index, max) => dedupe.emit('progress', index, max), dedupe.settings.compareAll.progressThrottle, {leading: false});
 		async()
 			.use(asyncCartesian)
+			.limit(dedupe.settings.compareAll.threadLimit)
 			.compare(refs, function(nextRef, refs, index, max) {
 				var result = dedupe.compare(refs[0], refs[1]);
-				dedupe.emit('progress', index, max);
 				if (result.isDupe) {
 					dedupe.emit('dupe', refs[0], refs[1], result);
 				}
+				throttledProgress(index, max);
 				nextRef();
 			})
 			.end(function(err) {

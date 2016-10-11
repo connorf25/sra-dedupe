@@ -1,6 +1,6 @@
 {
   "name": "sra-dedupe",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "CREBP-SRA tool to deduplicate reference libraries",
   "main": "index.js",
   "scripts": {
@@ -29,8 +29,8 @@
     "mocha": "^3.1.2"
   },
   "dependencies": {
-    "async-chainable": "^2.2.1",
-    "async-chainable-cartesian": "1.0.1",
+    "async-chainable": "^2.2.2",
+    "async-chainable-cartesian": "1.0.2",
     "compare-names": "^1.0.0",
     "doi-regex": "^0.1.4",
     "lodash": "^4.16.4",
