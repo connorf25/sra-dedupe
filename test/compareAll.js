@@ -7,6 +7,7 @@ describe('dedupe.compareAll()', function() {
 		var dedupe = dedupeLib();
 		dedupe.compareAll(require('./data/nodupes.json'))
 			.on('dupe', function(ref1, ref2, result) {
+				console.log('FAIL', ref1, ref2, result);
 				expect.fail();
 			})
 			.on('end', done);

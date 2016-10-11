@@ -26,13 +26,14 @@
   "homepage": "https://github.com/CREBP/sra-dedupe#readme",
   "devDependencies": {
     "chai": "^3.5.0",
-    "mocha": "^3.0.2"
+    "mocha": "^3.1.2"
   },
   "dependencies": {
-    "async-chainable": "^2.1.1",
+    "async-chainable": "^2.2.1",
+    "async-chainable-cartesian": "1.0.1",
     "compare-names": "^1.0.0",
     "doi-regex": "^0.1.4",
-    "lodash": "^4.16.3",
+    "lodash": "^4.16.4",
     "natural": "^0.4.0"
   },
   "engines": {

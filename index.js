@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var async = require('async-chainable');
+var asyncCartesian = require('async-chainable-cartesian');
 var compareNames = require('compare-names');
 var doiRegex = require('doi-regex');
 var events = require('events');
@@ -147,6 +148,7 @@ function SRADedupe(settings) {
 
 	/**
 	* Asynchronously compare all entities within a collection firing emitters as duplicates are found
+	* This function uses a lazy Cartesian product iterator to optimize the stack when iterating
 	* NOTE: References are run via dedupe.fetchRef() before they are examined. Override that function if you wish to use a pseudo generator (such as DB access)
 	* @param {array} refs An array of references
 	* @fires dupe A duplicate was found, called with both sides of the comparison and the duplicate result
@@ -157,27 +159,14 @@ function SRADedupe(settings) {
 	*/
 	dedupe.compareAll = function(refs) {
 		async()
-			.forEach(refs, function(nextRef1, ref1, ref1Offset) {
-				async()
-					.then('ref1Resolved', function(next) {
-						dedupe.fetchRef(ref1, next);
-					})
-					.forEach(refs.slice(ref1Offset+1), function(nextRef2, ref2, ref2Offset) {
-						var ref1Resolved = this.ref1Resolved;
-						dedupe.fetchRef(ref2, function(err, ref2Resolved) {
-							if (err) return nextRef2(err);
-							var result = dedupe.compare(ref1Resolved, ref2Resolved);
-							if (result.isDupe) {
-								dedupe.emit('dupe', ref1, ref2, result);
-							}
-							nextRef2();
-						});
-					})
-					.then(function(next) {
-						dedupe.emit('progress', ref1Offset, refs.length);
-						next();
-					})
-					.end(nextRef1);
+			.use(asyncCartesian)
+			.compare(refs, function(nextRef, refs, index, max) {
+				var result = dedupe.compare(refs[0], refs[1]);
+				dedupe.emit('progress', index, max);
+				if (result.isDupe) {
+					dedupe.emit('dupe', refs[0], refs[1], result);
+				}
+				nextRef();
 			})
 			.end(function(err) {
 				if (err) return dedupe.emit('error', err);
