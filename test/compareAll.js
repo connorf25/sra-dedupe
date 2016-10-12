@@ -27,9 +27,9 @@ describe('dedupe.compareAll()', function() {
 				progressUpdates++;
 			})
 			.on('end', function() {
+				expect(progressUpdates).to.be.above(0);
 				expect(dupes).to.have.length.above(0);
 				expect(dupes).to.have.length.below(library.length / 8); // Only allow 1/8th of the library to be dupes
-				expect(progressUpdates).to.be.equal(library.length);
 				done();
 			});
 	});

@@ -1,6 +1,6 @@
 {
   "name": "sra-dedupe",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "CREBP-SRA tool to deduplicate reference libraries",
   "main": "index.js",
   "scripts": {
