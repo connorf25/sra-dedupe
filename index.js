@@ -73,21 +73,16 @@ function SRADedupe(settings) {
 
 		// Stage 2 - Basic sanity checks - do not match if year, page, volume, isbn or number is present BUT mismatch exactly {{{
 		// Since these fields are usually numeric its fairly likely that if these dont match its not a duplicate
-		var reason;
-		if (['year', 'pages', 'volume', 'number', 'isbn'].some(function(f) { // NOTE: This returns an inverted value (i.e. return true = mismatches)
+		var mismatchedField = ['year', 'pages', 'volume', 'number', 'isbn'].find(function(f) { // Find the first mismatched (but important) field
 			if (ref1[f] && ref2[f]) { // Both refs possess the comparitor
 				var ref1n = dedupe.getNumeric(ref1[f]);
 				var ref2n = dedupe.getNumeric(ref2[f]);
-				if (ref1n === false || ref2n === false) return true; // One side isn't comparable
+				if (ref1n === false || ref2n === false) return false; // One side isn't comparable
 
-				if (ref1n != ref2n) {
-					reason = f;
-					return true;
-				} else {
-					return false;
-				}
+				return (ref1n != ref2n);
 			}
-		})) return {isDupe: false, reason: reason};
+		});
+		if (mismatchedField) return {isDupe: false, reason: mismatchedField};
 		// }}}
 
 		// Stage 3 - Extract DOIs from both sides and compare {{{
