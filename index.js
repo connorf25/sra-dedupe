@@ -2,10 +2,10 @@ var _ = require('lodash');
 var async = require('async-chainable');
 var asyncCartesian = require('async-chainable-cartesian');
 var compareNames = require('compare-names');
-var doiRegex = require('doi-regex');
 var events = require('events');
 var natural = require('natural');
 var util = require('util');
+var reflibUtils = require('reflib-utils');
 
 function SRADedupe(settings) {
 	var dedupe = this;
@@ -13,7 +13,6 @@ function SRADedupe(settings) {
 	dedupe.settings = _.defaults(settings, {
 		regexps: {
 			alphaNumeric: /[^a-z0-9]+/g,
-			doi: doiRegex(),
 			junkWords: /\b(the|a)\b/g,
 			looksNumeric: /^[0-9\.\-]+$/,
 			looksNumericWhitespace: /^\s*[0-9\.\-]+\s*$/,
@@ -29,23 +28,6 @@ function SRADedupe(settings) {
 		},
 	});
 
-
-	/**
-	* Attempt to locate and extract a DOI from a reference
-	* The DOI could be located in the DOI field or stored as a URL within the url array
-	* @param {Object} ref The reference to examine
-	* @return {string|boolean} Either the extracted 'true' DOI (i.e. minus URL prefix) or boolean false if none is present
-	*/
-	dedupe.findDOI = function(ref) {
-		if (ref.doi && dedupe.settings.regexps.doi.test(ref.doi)) return ref.doi.match(dedupe.settings.regexps.doi)[0];
-
-		if (ref.urls) {
-			var matching = ref.urls.filter(url => dedupe.settings.regexps.doi.test(url));
-			if (matching.length == 1) return matching[0].match(dedupe.settings.regexps.doi)[0];
-		}
-
-		return false;
-	};
 
 	/**
 	* Returns the number version of the given value or false if it cannot be converted
@@ -86,8 +68,8 @@ function SRADedupe(settings) {
 		// }}}
 
 		// Stage 3 - Extract DOIs from both sides and compare {{{
-		var ref1DOI = dedupe.findDOI(ref1);
-		var ref2DOI = dedupe.findDOI(ref2);
+		var ref1DOI = reflibUtils.getDOI(ref1);
+		var ref2DOI = reflibUtils.getDOI(ref2);
 		if (ref1DOI && ref2DOI) return {isDupe: ref1DOI == ref2DOI, reason: 'doi'}; // Both have a DOI so we can be definitive
 		// }}}
 
