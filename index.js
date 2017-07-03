@@ -138,7 +138,12 @@ function SRADedupe(settings) {
 	* @return {Object} This object instance
 	*/
 	dedupe.compareAll = function(refs) {
-		var throttledProgress = _.throttle((index, max) => dedupe.emit('progress', index, max), dedupe.settings.compareAll.progressThrottle, {leading: false});
+		var finishedCompare = false;
+		var throttledProgress = _.throttle((index, max) => {
+			if (finishedCompare) return; // We've already signalled we've done - dont send another progress update
+			dedupe.emit('progress', index, max);
+		}, dedupe.settings.compareAll.progressThrottle, {leading: false});
+
 		async()
 			.use(asyncCartesian)
 			.limit(dedupe.settings.compareAll.threadLimit)
@@ -151,6 +156,7 @@ function SRADedupe(settings) {
 				nextRef();
 			})
 			.end(function(err) {
+				finishedCompare = true;
 				if (err) return dedupe.emit('error', err);
 				dedupe.emit('end');
 			});
