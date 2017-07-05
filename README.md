@@ -7,7 +7,9 @@ This module forms the reference library deduplication tool.
 The [previous version of this module](https://github.com/CREBP/SRA/blob/master/application/models/reference.php#L122-L191) was PHP based, this version is NodeJS and is intended to be used as part of a suite - i.e. this module cannot do data access by itself and forms only the most atomic of deduplication operations.
 
 
-See the [reflib-cli](https://github.com/hash-bang/Reflib-CLI) program for a user facing version of this module.
+See the [reflib-cli](https://github.com/hash-bang/Reflib-CLI) project for a command line version of this module.
+
+See the [sra-dedupe-ui](https://github.com/CREBP/sra-dedupe-ui) project for a graphical user interface version of this module.
 
 
 ```javascript
