@@ -25,16 +25,17 @@
   ],
   "worker": {
     "type": "docker",
-    "container": "crebp/dedupe",
-    "mount": "/app/work",
-    "command": [
-      "/app/work/input.json",
-      "/app/work/output.json"
+    "base": "node:alpine",
+    "build": [
+      "apk add --no-cache git openssh",
+      "git clone --depth=1 https://github.com/IEBH/I3-data-shuffler.git /app",
+      "npm ci"
     ],
     "environment": {
       "DEDUPE_ACTION": "${settings.action}",
       "DEDUPE_MARK_FIELD": "${settings.markField}"
-    }
+    },
+    "command": "./app.js '${inputs[0].path}' '${outputs[0].path}'"
   },
   "outputs": [
     {
