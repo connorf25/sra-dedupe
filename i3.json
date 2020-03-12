@@ -28,7 +28,7 @@
     "base": "node:alpine",
     "build": [
       "apk add --no-cache git openssh",
-      "git clone --depth=1 https://github.com/IEBH/I3-data-shuffler.git /app",
+      "git clone --depth=1 https://github.com/IEBH/sra-dedupe.git /app",
       "npm ci"
     ],
     "environment": {
@@ -59,11 +59,6 @@
       "type": "string",
       "advanced": true,
       "default": "caption"
-    },
-    "merge.dupes": {
-      "show": false,
-      "type": "text",
-      "default": "ignore"
     }
   }
 }
