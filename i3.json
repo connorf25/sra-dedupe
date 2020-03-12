@@ -1,0 +1,68 @@
+{
+  "name": "@iebh/sra-dedupe",
+  "title": "SRA Deduplicator",
+  "version": "1.0.9",
+  "description": "IEBH-SRA tool to deduplicate reference libraries",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IEBH/sra-dedupe.git"
+  },
+  "assets": {
+    "logo": "logo.svg"
+  },
+  "keywords": [
+    "dedupe",
+    "deduplicate"
+  ],
+  "author": "Matt Carter <m@ttcarter.com> (https://github.com/hash-bang)",
+  "license": "MIT",
+  "inputs": [
+    {
+      "type": "references",
+      "format": "json",
+      "filename": "input.json"
+    }
+  ],
+  "worker": {
+    "type": "docker",
+    "container": "crebp/dedupe",
+    "mount": "/app/work",
+    "command": [
+      "/app/work/input.json",
+      "/app/work/output.json"
+    ],
+    "environment": {
+      "DEDUPE_ACTION": "${settings.action}",
+      "DEDUPE_MARK_FIELD": "${settings.markField}"
+    }
+  },
+  "outputs": [
+    {
+      "type": "references",
+      "format": "json",
+      "filename": "output.json"
+    }
+  ],
+  "config": {
+    "action": {
+      "type": "choice",
+      "default": "remove",
+      "enum": [
+        {"id": "remove", "title": "Remove all duplicates"},
+	{"id": "mark", "title": "Mark duplicates in their 'caption' field"}
+      ]
+    },
+    "markField": {
+      "title": "Field to change when marking as duplicate",
+      "showIf": "action == 'mark'",
+      "type": "string",
+      "advanced": true,
+      "default": "caption"
+    },
+    "merge.dupes": {
+      "show": false,
+      "type": "text",
+      "default": "ignore"
+    }
+  }
+}

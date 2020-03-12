@@ -1,7 +1,8 @@
 {
   "name": "sra-dedupe",
+  "title": "SRA Deduplicator",
   "version": "1.0.9",
-  "description": "CREBP-SRA tool to deduplicate reference libraries",
+  "description": "IEBH-SRA tool to deduplicate reference libraries",
   "main": "index.js",
   "scripts": {
     "test": "mocha"
@@ -11,19 +12,15 @@
     "url": "git+https://github.com/CREBP/sra-dedupe.git"
   },
   "keywords": [
-    "crebp",
-    "sra",
     "dedupe",
-    "deduplicate",
-    "medical",
-    "research"
+    "deduplicate"
   ],
   "author": "Matt Carter <m@ttcarter.com> (https://github.com/hash-bang)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/CREBP/sra-dedupe/issues"
   },
-  "homepage": "https://github.com/CREBP/sra-dedupe#readme",
+  "homepage": "http://sr-accelerator.com",
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^5.2.0"
@@ -38,53 +35,5 @@
   },
   "engines": {
     "node": ">=4.0.0"
-  },
-  "inputs": [
-    {
-      "type": "citations",
-      "format": "json",
-      "filename": "input.json"
-    }
-  ],
-  "worker": {
-    "type": "docker",
-    "container": "crebp/dedupe",
-    "mount": "/app/work",
-    "command": [
-      "/app/work/input.json",
-      "/app/work/output.json"
-    ],
-    "environment": {
-      "DEDUPE_ACTION": "${settings.action}",
-      "DEDUPE_MARK_FIELD": "${settings.markField}"
-    }
-  },
-  "outputs": [
-    {
-      "type": "citations",
-      "format": "json",
-      "filename": "output.json"
-    }
-  ],
-  "settings": {
-    "action": {
-      "type": "choice",
-      "default": "remove",
-      "enum": [
-        {"id": "remove", "title": "Remove all duplicates"},
-	{"id": "mark", "title": "Mark duplicates in their 'caption' field"}
-      ]
-    },
-    "markField": {
-      "title": "Field to change when marking as duplicate",
-      "showIf": "action == 'mark'",
-      "type": "string",
-      "advanced": true,
-      "default": "caption"
-    },
-    "merge.dupes": {
-      "type": "hidden",
-      "default": "ignore"
-    }
   }
 }
