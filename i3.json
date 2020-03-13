@@ -57,7 +57,6 @@
       "title": "Field to change when marking as duplicate",
       "showIf": "action == 'mark'",
       "type": "string",
-      "advanced": true,
       "default": "caption"
     }
   }
