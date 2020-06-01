@@ -1,7 +1,7 @@
 {
   "name": "sra-dedupe",
   "title": "SRA Deduplicator",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "IEBH-SRA tool to deduplicate reference libraries",
   "main": "index.js",
   "scripts": {
@@ -37,53 +37,5 @@
   },
   "engines": {
     "node": ">=4.0.0"
-  },
-  "inputs": [
-    {
-      "type": "citations",
-      "format": "json",
-      "filename": "input.json"
-    }
-  ],
-  "worker": {
-    "type": "docker",
-    "container": "crebp/dedupe",
-    "mount": "/app/work",
-    "command": [
-      "/app/work/input.json",
-      "/app/work/output.json"
-    ],
-    "environment": {
-      "DEDUPE_ACTION": "${settings.action}",
-      "DEDUPE_MARK_FIELD": "${settings.markField}"
-    }
-  },
-  "outputs": [
-    {
-      "type": "citations",
-      "format": "json",
-      "filename": "output.json"
-    }
-  ],
-  "settings": {
-    "action": {
-      "type": "choice",
-      "default": "remove",
-      "enum": [
-        {"id": "remove", "title": "Remove all duplicates"},
-	{"id": "mark", "title": "Mark duplicates in their 'caption' field"}
-      ]
-    },
-    "markField": {
-      "title": "Field to change when marking as duplicate",
-      "showIf": "action == 'mark'",
-      "type": "string",
-      "advanced": true,
-      "default": "caption"
-    },
-    "merge.dupes": {
-      "type": "hidden",
-      "default": "ignore"
-    }
   }
 }
