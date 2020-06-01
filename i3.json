@@ -1,71 +1,50 @@
 {
-  "name": "sra-dedupe",
+  "name": "@iebh/sra-dedupe",
   "title": "SRA Deduplicator",
   "version": "1.0.9",
   "description": "IEBH-SRA tool to deduplicate reference libraries",
-  "main": "index.js",
-  "scripts": {
-    "test": "mocha"
-  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CREBP/sra-dedupe.git"
+    "url": "git+https://github.com/IEBH/sra-dedupe.git"
+  },
+  "assets": {
+    "logo": "logo.svg"
   },
   "keywords": [
     "dedupe",
-    "deduplicate",
-    "medical",
-    "research"
+    "deduplicate"
   ],
   "author": "Matt Carter <m@ttcarter.com> (https://github.com/hash-bang)",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/CREBP/sra-dedupe/issues"
-  },
-  "homepage": "http://sr-accelerator.com",
-  "devDependencies": {
-    "chai": "^4.2.0",
-    "mocha": "^5.2.0"
-  },
-  "dependencies": {
-    "async-chainable": "^2.6.0",
-    "async-chainable-cartesian": "1.0.2",
-    "compare-names": "^1.1.0",
-    "lodash": "^4.17.11",
-    "natural": "^0.6.2",
-    "reflib-utils": "^1.0.0"
-  },
-  "engines": {
-    "node": ">=4.0.0"
-  },
   "inputs": [
     {
-      "type": "citations",
+      "type": "references",
       "format": "json",
       "filename": "input.json"
     }
   ],
   "worker": {
     "type": "docker",
-    "container": "crebp/dedupe",
-    "mount": "/app/work",
-    "command": [
-      "/app/work/input.json",
-      "/app/work/output.json"
+    "base": "node:alpine",
+    "build": [
+      "apk add --no-cache git openssh",
+      "git clone --depth=1 https://github.com/IEBH/sra-dedupe.git /app",
+      "npm ci"
     ],
     "environment": {
       "DEDUPE_ACTION": "${settings.action}",
       "DEDUPE_MARK_FIELD": "${settings.markField}"
-    }
+    },
+    "command": "./app.js '${inputs[0].path}' '${outputs[0].path}'"
   },
   "outputs": [
     {
-      "type": "citations",
+      "type": "references",
       "format": "json",
       "filename": "output.json"
     }
   ],
-  "settings": {
+  "config": {
     "action": {
       "type": "choice",
       "default": "remove",
@@ -78,12 +57,7 @@
       "title": "Field to change when marking as duplicate",
       "showIf": "action == 'mark'",
       "type": "string",
-      "advanced": true,
       "default": "caption"
-    },
-    "merge.dupes": {
-      "type": "hidden",
-      "default": "ignore"
     }
   }
 }
