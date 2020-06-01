@@ -26,6 +26,9 @@ function SRADedupe(settings) {
 			threadLimit: 50, // How many parallel threads to allow when comparing
 			progressThrottle: 100, // Throttle progress reporting to this value
 		},
+		match: {
+			isbn: true,		// Turn off ISBN matching, if you find it creates false positives e.g. with collected works.
+		},
 	});
 
 
@@ -87,13 +90,15 @@ function SRADedupe(settings) {
 		// This comparison only works if each side has a 'perfect' ISBN - i.e. /^\s*[0-9\.\-\s]+\s*$/
 		// This test uses the certainty that ISBN numbers are unlikely to be mangled
 		// If both (de-noised) ISBNs match the ref is declared a dupe, if not they are declared a NON dupe
-		var r1Isbn = dedupe.getNumeric(ref1.isbn);
-		var r2Isbn = dedupe.getNumeric(ref2.isbn);
-		if (r1Isbn !== false && r2Isbn !== false) { // Can compare ISBNs
-			return {isDupe: r1Isbn == r2Isbn, reason: 'isbn'}; // If direct match its a dupe, if not its NOT a dupe
+		if(dedupe.settings.match.isbn){
+			var r1Isbn = dedupe.getNumeric(ref1.isbn);
+			var r2Isbn = dedupe.getNumeric(ref2.isbn);
+			if(r1Isbn !== false && r2Isbn !== false){ // Can compare ISBNs
+				return {isDupe: r1Isbn == r2Isbn, reason: 'isbn'}; // If direct match its a dupe, if not its NOT a dupe
+			}
 		}
 		// }}}
-
+		
 		// Stage 6 - Comparison of title + authors via string distance checking {{{
 		var r1Title = ref1.title.toLowerCase();
 		var r2Title = ref2.title.toLowerCase();
