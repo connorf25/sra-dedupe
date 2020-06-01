@@ -61,7 +61,7 @@
   },
   "outputs": [
     {
-      "type": "citations",
+      "type": "references",
       "format": "json",
       "filename": "output.json"
     }
