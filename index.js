@@ -28,6 +28,7 @@ function SRADedupe(settings) {
 		},
 		match: {
 			isbn: true,		// Turn off ISBN matching, if you find it creates false positives e.g. with collected works.
+			doi: true,		// Turn off DOI matching, similar to ISBN
 		},
 	});
 
@@ -71,9 +72,11 @@ function SRADedupe(settings) {
 		// }}}
 
 		// Stage 3 - Extract DOIs from both sides and compare {{{
-		var ref1DOI = reflibUtils.getDOI(ref1);
-		var ref2DOI = reflibUtils.getDOI(ref2);
-		if (ref1DOI && ref2DOI) return {isDupe: ref1DOI == ref2DOI, reason: 'doi'}; // Both have a DOI so we can be definitive
+		if(dedupe.settings.match.doi){
+			var ref1DOI = reflibUtils.getDOI(ref1);
+			var ref2DOI = reflibUtils.getDOI(ref2);
+			if (ref1DOI && ref2DOI) return {isDupe: ref1DOI == ref2DOI, reason: 'doi'}; // Both have a DOI so we can be definitive
+		}
 		// }}}
 
 		// Stage 4 - Extraction of years from titles + comparison {{{
