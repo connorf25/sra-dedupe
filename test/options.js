@@ -21,4 +21,23 @@ describe('dedupe.compare()', function() {
 		expect(dedupe.compare({title: 'my paper', isbn: '978-0563380958'}, {title: 'my paper', isbn: '978-0553380958'})).to.deep.equal({isDupe: false, reason: 'isbn'});
 	});
 	
+    // Note the DOI default ON is covered in compare.js test, there's no point duplicating it here.
+    it('should not match on DOI duplicates when configured OFF', function() {
+        var dedupe = require('..')({match:{doi:false}});
+    
+        expect(dedupe.compare({
+			title: 'my paper', doi: '10.1109/5.771073',
+		}, {
+			title: 'another paper',
+			doi: '10.1109/5.771073',
+		})).to.deep.equal({isDupe: false, reason: 'EXHAUSTED'});
+
+		expect(dedupe.compare({
+			title: 'my paper',
+			urls: ['http://my-paper.com', 'https://doi.org/10.1109/5.771073'],
+		}, {
+			title: 'another paper',
+			doi: '10.1109/5.771073',
+		})).to.deep.equal({isDupe: false, reason: 'EXHAUSTED'});
+	});
 });
