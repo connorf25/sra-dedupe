@@ -46,6 +46,28 @@ function SRADedupe(settings) {
 	};
 
 	/**
+	* Returns true if titles match close enough else return false
+	* @param {string} t1 The first title
+	* @param {string} t2 The second title
+	*/
+	dedupe.compareTitle = function(t1, t2) {
+		var r1Title = t1.toLowerCase();
+		var r2Title = t2.toLowerCase();
+		if ((t1 && t2) && // Has all required fields?
+		( // Title matches or approximately matches
+			t1 == t2 ||
+			(
+				natural.JaroWinklerDistance(r1Title, r2Title) >= dedupe.settings.stringDistances.jaroWinklerMin &&
+				natural.LevenshteinDistance(r1Title, r2Title) <= dedupe.settings.stringDistances.levenshteinMax
+			)
+		)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
 	* Examine two inputs and decide if they are duplicate references
 	* @param {Object} ref1 The first reference to compare
 	* @param {Object} ref2 The second reference to compare
@@ -89,6 +111,7 @@ function SRADedupe(settings) {
 		) return {isDupe: false, reason: 'year'};
 		// }}}
 
+		// NOTE: Because ISBN is the same between journals the title must also be checked
 		// Stage 5 - Extract numbers from ISBNs on either side and compare {{{
 		// This comparison only works if each side has a 'perfect' ISBN - i.e. /^\s*[0-9\.\-\s]+\s*$/
 		// This test uses the certainty that ISBN numbers are unlikely to be mangled
@@ -97,14 +120,15 @@ function SRADedupe(settings) {
 			var r1Isbn = dedupe.getNumeric(ref1.isbn);
 			var r2Isbn = dedupe.getNumeric(ref2.isbn);
 			if(r1Isbn !== false && r2Isbn !== false){ // Can compare ISBNs
-				return {isDupe: r1Isbn == r2Isbn, reason: 'isbn'}; // If direct match its a dupe, if not its NOT a dupe
+				isIsbnDupe = r1Isbn == r2Isbn
+				if(isIsbnDupe) {
+					return {isDupe: dedupe.compareTitle(ref1.title, ref2.title), reason: 'isbn+title'}
+				} else return {isDupe: false, reason: 'isbn'}; // If direct match its a dupe, if not its NOT a dupe
 			}
 		}
 		// }}}
 		
 		// Stage 6 - Comparison of title + authors via string distance checking {{{
-		var r1Title = ref1.title.toLowerCase();
-		var r2Title = ref2.title.toLowerCase();
 
 		/*if (
 			natural.JaroWinklerDistance(r1Title, r2Title) >= config.tasks.dedupe.stringDistance.jaroWinklerMin &&
@@ -119,14 +143,7 @@ function SRADedupe(settings) {
 		}*/
 
 		if (
-			(ref1.title && ref2.title) && // Has all required fields?
-			( // Title matches or approximately matches
-				ref1.title == ref2.title ||
-				(
-					natural.JaroWinklerDistance(r1Title, r2Title) >= dedupe.settings.stringDistances.jaroWinklerMin &&
-					natural.LevenshteinDistance(r1Title, r2Title) <= dedupe.settings.stringDistances.levenshteinMax
-				)
-			) &&
+			dedupe.compareTitle(ref1.title, ref2.title) &&
 			compareNames(ref1.authors || [], ref2.authors || []) // Authors look similar
 		) return {isDupe: true, reason: 'title+authors'};
 		// }}}
